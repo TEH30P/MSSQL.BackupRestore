@@ -3,22 +3,14 @@
 function ~MSSQLBR~DBDataBkpSmart~Conf~Load
 {	param
 	(	[parameter(Mandatory = 1, Position = 0)][Alias('Path', 'P')]
-		[string]$iPath
+		[String]$iPath
 	)
 try 
-{	[psobject]$ConfData = m~ConfFile~Load $iPath;
-	[System.Collections.Queue]$ConfDataQue = [System.Collections.Queue]::new();
-	$ConfDataQue.Enqueue($ConfData);
+{	[psobject[]]$ConfArr = ~SJob~FileConf~Parse $iPath 'MSSQLBkp' 'ConfBase';
 
-	while ($null -ne $ConfData.PSVInherits)
-	{	[psobject]$ConfData = m~ConfFile~Load ($ConfData.PSVInherits.Is);
-		$ConfDataQue.Enqueue($ConfData);
-	}
-
-	[psobject]$ConfData = $ConfDataQue.Dequeue();
-
-	while ($ConfDataQue.Count) 
+	for ([Int32]$k = $ConfArr.Count; ($k--))
 	{	
+
 	}
 }
 catch 

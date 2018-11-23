@@ -106,9 +106,7 @@ try
 		}
 		
 		try 
-		{	$MsgCll.Clear();
-			
-			if (-not $DoInit)
+		{	if (-not $DoInit)
 			{	Write-Verbose 'Create a queue item.';
 				$Local:QIKey = m~Queue~Bkp~New $iaRepoPath $iPriority $JobType ($SMOCnn.TrueName) $iDBName $iConfPath;
 			}
@@ -249,15 +247,13 @@ try
 		{	if ($fAsShJob)
 			{	~SJLog~MsgException~New Err $LogDate $_ -iLogSrc ($MyInvocation.MyCommand)}
 			
-			#!!!REM: replaced to std logging.
-			#m~Catch~ToMsgCllStd $_ $MsgCll;
-			
 			if (-not [String]::IsNullOrEmpty($Local:QIKey))
 			{	try {m~QueueItem~StateSet $iaRepoPath $Local:QIKey 'Nil' 'Err'} catch {}}
 			
 			$DoInit = $true;
 			$ErrCnt++;
 			$SMOCnn.Disconnect();
+			Write-Verbose 'Error occured.';
 		}
 		finally
 		{	if ($null -ne $Local:SMOBkp)
@@ -271,6 +267,7 @@ try
 			if ($fAsShJob -and $null -ne $MsgCll -and $MsgCll.Count)
 			{	~SJLog~Msg~New Wrn $LogDate ($MsgCll.ToArray()) -iLogSrc ($MyInvocation.MyCommand)}
 
+			$MsgCll.Clear();
 			$Local:QIKey = [String]::Empty;
 			$Local:SMOBkp = $null;
 		}
@@ -290,10 +287,6 @@ catch
 		try {~SJLog~Msg~New Err $LogDate $ParamMsgCll -fAsKeyValue -iKey 'param' -iLogSrc ($MyInvocation.MyCommand)} catch {};
 	}
 
-	$ErrCnt = 0;
-
-	#!!!REM: replaced to std logging.
-	#m~Catch~ToMsgCllStd $_ $MsgCll;
 	throw;
 }
 finally

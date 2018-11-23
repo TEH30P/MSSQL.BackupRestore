@@ -1,0 +1,30 @@
+{
+  "OV-MSSQLBkp": {
+    "SV-SrvInst": "string",
+    "OV-ArchRule": {
+      "SL-DataRtn": {
+        "V-Is": "timespan",
+        "SV-Layer": "int"
+      },
+      "SV-TlogRtn": {
+        "V-Is": "timespan"
+      }
+    },
+    "SL-DBName": "string",
+    "SL-Repo": "string",
+    "OV-DataBkpRule": {
+      "SV-DiffFullRatioMax": "double",
+      "SV-DiffSizeFactor": "double",
+      "SV-Duration": "timespan",
+      "SV-ArcLayer": "int",
+      "SV-OperAllow": "string"
+    },
+    "OV-TLogBkpRule": {
+      "SV-Duration": "timespan",
+      "SV-ChkPeriod": "timespan",
+      "SV-AgeTrg": "timespan",
+      "SV-UsageMinTrg": "long",
+      "SV-UsageMaxTrg": "long"
+    }
+  }
+}

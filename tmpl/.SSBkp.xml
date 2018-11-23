@@ -1,51 +1,28 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <OV-MSSQLBkp>
-	<SV-Inherits/>
-	<SV-SrvInst V-Is="dummy\sql0" />
-	<SV-DBName V-Is="dummydb" />
+	<SV-Base>.\dummy\base.xml</SV-Base>
+	<SV-SrvInst>dummy\sql</SV-SrvInst>
+	<SL-DBName>dummydb</SL-DBName>
 	<SL-Repo>file://a:/dummy0</SL-Repo>
 	<SL-Repo>file://a:/dummy1</SL-Repo>
-	<OV-RuleDef SV-DiffFullRatioMax="0.25" SV-DiffSizeFactor="3" />
-	<OL-Rule SV-DiffFullSizeMax="2G">
-		<OL-DataBkpDTW 
-			SV-Begin="FD~sat~T04:00:00" 
-			SV-Duration="P1DT12H" 
-			SV-ArchLayer="0" 
-			SV-OperAllow="df" 
-		/>
-		<OL-DataBkpDTW 
-			SV-Begin="FD~!sat~!sun~T04:00:00" 
-			SV-Duration="PT2H"
-			SV-ArchLayer="0" 
-			SV-OperAllow="d" 
-		/>
-		<OL-TlogBkpDTW 
-			SV-Begin="FD~T08:30:00" 
-			SV-Duration="PT9H" 
-			SV-Period="FT~15M" 
-		/>
-		<OL-TlogBkpDTW 
-			SV-Begin="FD~T18:30:00" 
-			SV-Duration="PT14H" 
-			SV-Period="FT~5M" 
-			SV-UsageTrg="512M" 
-		/>
-		<OV-Arch>
-			<SL-DataRtn V-Is="P7D" SV-Layer="0" />
-			<SV-TlogRtn V-Is="P1D" />
-		</OV-Arch>
-	</OL-Rule>
-	<OL-Rule SV-SrvInst="dummy\sql" SL-DBName="master" SV-DiffFullSizeMax="1G">
-		<OL-DataBkpDTW 
-			SV-Begin="FD" 
-			SV-Duration="PT1H" 
-			SV-ArchLayer="0" 
-			SV-OperAllow="df" 
-		/>
-		<OV-Arch>
-			<SL-DataRtn>P3D</SL-DataRtn>
-		</OV-Arch>
-	</OL-Rule>
+	<OV-ArchRule>
+		<SL-DataRtn V-Is="P7D">
+			<SV-Layer>0</SV-Layer>
+		</SL-DataRtn>
+		<SV-TlogRtn V-Is="P1D"/>
+	</OV-ArchRule>
+	<OV-DataBkpRule
+		SV-Duration="P1DT12H"
+		SV-ArcLayer="0"
+		SV-DiffFullRatioMax="0.25"
+		SV-DiffSizeFactor="3"
+		SV-OperAllow="df"
+	/>
+	<OV-TLogBkpRule
+		SV-AgeTrg="PT15M"
+		SV-Duration="PT14H"
+		SV-UsageMaxTrg="1G"
+		SV-UsageMinTrg="512M"
+		SV-ChkPeriod="PT5M"
+	/>
 </OV-MSSQLBkp>
-
-

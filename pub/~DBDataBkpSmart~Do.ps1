@@ -1,4 +1,3 @@
-#!!!TODO: implement
 function ~MSSQLBR~DBDataBkpSmart~Do
 {	[CmdletBinding()]param
 	(	[parameter(Mandatory=1, position=0)]
@@ -29,6 +28,8 @@ function ~MSSQLBR~DBDataBkpSmart~Do
 			[Byte]$iPriority = 0
 	,	[parameter(Mandatory=0)]
 			[switch]$fCompression
+	,	[parameter(Mandatory=0)]
+			[switch]$fAsShJob
 	,	[parameter(Mandatory=0)]
 			[String]$iConfPath = [string]::Empty
 	);
@@ -276,8 +277,6 @@ catch
 		try {~SJLog~Msg~New Err $LogDate $ParamMsgCll -fAsKeyValue -iKey 'param' -iLogSrc ($MyInvocation.MyCommand)} catch {};
 	}
 	
-	#!!!REM: replaced to std logging.
-	#m~Catch~ToMsgCllStd $_ $MsgCll;
 	throw;
 }
 finally
@@ -299,13 +298,6 @@ finally
 	foreach ($BkpFilePathIt in $Local:BkpFilePathArr)
 	{	if ([IO.File]::Exists($BkpFilePathIt))
 		{	[IO.File]::Delete($BkpFilePathIt)}
-	}
-	#>	
-
-	<#!!!REM: replaced to std logging.
-	if (-not [String]::IsNullOrEmpty($Local:QIKey))
-	{	if ($null -ne $MsgCll -and $MsgCll.Count)
-		{	try {m~QueueItem~Upd $iaRepoPath $Local:QIKey 'Nil' @{'L-Msg' = $MsgCll.ToArray()}} catch {}}
 	}
 	#>
 }}
