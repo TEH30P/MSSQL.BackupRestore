@@ -37,12 +37,9 @@ try
 	@{  iaRepoPath = $iaRepoPath
 	;   iSrvInst   = $SMOCnn.TrueName
 	;   iDBName    = $iDBName
+	;	iLSNLast   = [Decimal]('9' * 25)
 	#;   iAt        = [datetime]::Now #!!!REM: backup date will written to backup file name after backup process will done.
 	};
-	
-	# To be shure that is not copy-only backup.
-	if (-not $fCopyOnly)
-	{   $BkpFileNamePara['iLSNLast'] = [Decimal]('9' * 25)}
 
 	[String[]]$Local:BkpFilePathArr = m~BkpFilePath~TLog~Gen @BkpFileNamePara;
 	[Microsoft.SqlServer.Management.Smo.Backup]$Local:SMOBkp = m~BkpTlog~Prep $SMOSrv $iDBName $Local:BkpFilePathArr $fCompression $fCopyOnly;
@@ -89,7 +86,9 @@ try
 	$BkpInfo = m~BkpFile~SQLHdr~Get $SMOSrv $Local:BkpFilePathArr;
 	$BkpFileNamePara['iAt'] = $BkpInfo.PSBackupStartDate;
 
-	if (-not $fCopyOnly)
+	if ($fCopyOnly)
+	{	$BkpFileNamePara.Remove('iLSNLast')}
+	else 
 	{   $BkpFileNamePara['iLSNLast'] = $BkpInfo.PSLastLSN}
 	
 	[Int32]$Idx = -1;

@@ -1,28 +1,29 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <OV-MSSQLBkp>
-	<SV-Base>.\dummy\base.xml</SV-Base>
+	<SV-Inherits>base.SSBkp.json</SV-Inherits>
 	<SV-SrvInst>dummy\sql</SV-SrvInst>
-	<SL-DBName>dummydb</SL-DBName>
-	<SL-Repo>file://a:/dummy0</SL-Repo>
+	<SV-DBName>dummydb</SV-DBName>
 	<SL-Repo>file://a:/dummy1</SL-Repo>
-	<OV-ArchRule>
+	<SL-Repo>file://a:/dummy2</SL-Repo>
+	<OV-LangolierRule>
 		<SL-DataRtn V-Is="P7D">
 			<SV-Layer>0</SV-Layer>
 		</SL-DataRtn>
 		<SV-TlogRtn V-Is="P1D"/>
-	</OV-ArchRule>
+	</OV-LangolierRule>
 	<OV-DataBkpRule
 		SV-Duration="P1DT12H"
 		SV-ArcLayer="0"
 		SV-DiffFullRatioMax="0.25"
 		SV-DiffSizeFactor="3"
+		SV-TotalSizeMax="128TB"
 		SV-OperAllow="df"
 	/>
 	<OV-TLogBkpRule
 		SV-AgeTrg="PT15M"
 		SV-Duration="PT14H"
-		SV-UsageMaxTrg="1G"
-		SV-UsageMinTrg="512M"
+		SV-UsageMaxTrg="1GB"
+		SV-UsageMinTrg="512MB"
 		SV-ChkPeriod="PT5M"
 	/>
 </OV-MSSQLBkp>

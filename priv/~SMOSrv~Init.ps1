@@ -12,7 +12,7 @@ function m~SMOSrv~Init~d
         $SMOSrv = [Microsoft.SqlServer.Management.Smo.Server]::new($SMOCnn);
     }
     elseif ($null -eq $iSrvInst)
-    {   throw [ArgumentNullException]::new('iaRepoPath')}
+    {   throw [ArgumentNullException]::new('iSrvInst')}
     else
     {	$SMOSrv = $iSrvInst;
         $SMOCnn = $SMOSrv.ConnectionContext;

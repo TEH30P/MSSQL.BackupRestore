@@ -92,7 +92,7 @@ try
 	}
 	
 	#
-	# TLog bakups.
+	# TLog backups.
 	# 
 
 	$BkpArr.Clear();

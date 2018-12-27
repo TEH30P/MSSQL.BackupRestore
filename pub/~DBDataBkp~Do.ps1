@@ -49,9 +49,6 @@ try
     #;   iAt        = [datetime]::Now #!!!REM: backup date will written to backup file name after backup process will done.
 	};
 	
-	if (-not $fCopyOnly)
-	{   $BkpFileNamePara['iArcLayer'] = $iArcLayer}
-
 	[String[]]$Local:BkpFilePathArr = m~BkpFilePath~Data~Gen @BkpFileNamePara;
 	[Microsoft.SqlServer.Management.Smo.Backup]$Local:SMOBkp = m~BkpDBData~Prep $SMOSrv $iDBName $Local:BkpFilePathArr $fDiff $fCompression $fCopyOnly;
 	
@@ -102,8 +99,13 @@ try
 	}
 
 	m~QueueItem~StateSet $iaRepoPath $Local:QIKey 'Act' 'Fin';
+	
 	$BkpInfo = m~BkpFile~SQLHdr~Get $SMOSrv $Local:BkpFilePathArr;
 	$BkpFileNamePara['iAt'] = $BkpInfo.PSBackupStartDate;
+
+	if (-not $fCopyOnly)
+	{   $BkpFileNamePara['iArcLayer'] = $iArcLayer}
+
 	[Int32]$Idx = -1;
 	
 	foreach($BkpFilePathIt in m~BkpFilePath~Data~Gen @BkpFileNamePara)

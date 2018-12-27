@@ -1,0 +1,12 @@
+{
+    "OV-MSSQLBkp": {
+      "SL-Repo": "file://a:/dummy0",
+      "OV-DataBkpRule": {
+        "SV-DiffFullRatioMax": "0.3",
+        "SV-DiffSizeFactor": "2"
+      },
+      "OV-TLogBkpRule": {
+        "SV-UsageMinTrg": "512M"
+      }
+    }
+  }

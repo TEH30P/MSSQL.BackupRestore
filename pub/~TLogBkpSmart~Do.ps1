@@ -22,7 +22,6 @@ function ~MSSQLBR~TLogBkpSmart~Do
 		[ValidateScript({$_ -gt 0})]
 			[Int64]$iUsageMaxTrg = [Int64]::MaxValue
 	,	[parameter(Mandatory=0)]
-		[ValidateScript( {if ($_ -eq [timespan]::Zero) {$true} else {($iAgeTrg -gt $_) -and ($iAgeTrg.Ticks % $_.Ticks -eq 0)}} )]
 			[TimeSpan]$iChkPeriod = [timespan]::Zero
 	,	[parameter(Mandatory=0)]
 			[Byte]$iPriority = 0
@@ -56,6 +55,9 @@ try
 	if ($iChkPeriod -gt [TimeSpan]::Zero)
 	{	if (-not $ModeCll.Contains('ChkUsedSpace'))
 		{	throw [ArgumentException]::new('Parameter prohibited when "iUsageMaxTrg" and "iUsageMinTrg" is not passed.', 'iChkPeriod')}
+
+		if ($iAgeTrg.Ticks % $iChkPeriod.Ticks)
+		{	throw [ArgumentException]::new('The time periods which represents by "iChkPeriod" and "iAgeTrg" is not overlap.', 'iChkPeriod')}
 
 		[timespan]$Period = $iChkPeriod;
 	}
@@ -151,13 +153,10 @@ try
 				@{  iaRepoPath = $iaRepoPath
 				;   iSrvInst   = $SMOCnn.TrueName
 				;   iDBName    = $iDBName
+				;	iLSNLast   = [Decimal]('9' * 25)
 				#;   iAt        = [datetime]::Now #!!!REM: backup date will written to backup file name after backup process will done.
 				};
-								
-				# To be shure that is not copy-only backup.
-				if (-not $BkpCopyOnly)
-				{   $BkpFileNamePara['iLSNLast'] = [Decimal]('9' * 25)}
-
+				
 				$BkpFilePathArr = m~BkpFilePath~TLog~Gen @BkpFileNamePara;
 				$Local:SMOBkp = m~BkpTlog~Prep $SMOSrv $iDBName $BkpFilePathArr $fCompression $BkpCopyOnly;
 			}
@@ -225,7 +224,9 @@ try
 				$BkpInfo = m~BkpFile~SQLHdr~Get $SMOSrv $BkpFilePathArr;
 				$BkpFileNamePara['iAt'] = $BkpInfo.PSBackupStartDate;
 			
-				if (-not $BkpCopyOnly)
+				if ($BkpCopyOnly)
+				{	$BkpFileNamePara.Remove('iLSNLast')}
+				else 
 				{   $BkpFileNamePara['iLSNLast'] = $BkpInfo.PSLastLSN}
 				
 				[Int32]$Idx = -1;
