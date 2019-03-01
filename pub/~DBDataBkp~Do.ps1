@@ -28,6 +28,7 @@ try
 {	#!!!TODO: When "-fRemoveDB" and "-fDiff" is set, function shoud check existence of Full backup.
 	
 	[datetime]$LogDate = [datetime]::Now;
+	[Collections.Generic.List[String]]$MsgCll = [Collections.Generic.List[String]]::new();
 	[String[]]$ParamMsgCll = m~BkpAttr~LogMsg~Gen $iSrvInst $iDBName $iaRepoPath;
 
 	[NMSSQL.MBkpRst.EBkpJobType]$JobType = if ($fDiff) {[NMSSQL.MBkpRst.EBkpJobType]::DBDiff} else {[NMSSQL.MBkpRst.EBkpJobType]::DBFull};
@@ -37,9 +38,12 @@ try
 	else 
 	{	[String]$Local:QIKey = m~Queue~Bkp~New $iaRepoPath $iPriority $JobType '_'       $iDBName $iConfPath}
 
+	
 	[Microsoft.SqlServer.Management.Smo.Server]$SMOSrv = $null;
 	[Microsoft.SqlServer.Management.Common.ServerConnection]$SMOCnn = $null;
 	. m~SMOSrv~Init~d; # << $iSrvInst
+
+	m~BkpDirData~Deactivate $SMOCnn.TrueName $iDBName $iaRepoPath | % {$MsgCll.Add($_)};
 
 	[hashtable]$BkpFileNamePara = 
     @{  iaRepoPath = $iaRepoPath
@@ -101,7 +105,7 @@ try
 	m~QueueItem~StateSet $iaRepoPath $Local:QIKey 'Act' 'Fin';
 	
 	$BkpInfo = m~BkpFile~SQLHdr~Get $SMOSrv $Local:BkpFilePathArr;
-	$BkpFileNamePara['iAt'] = $BkpInfo.PSBackupStartDate;
+	$BkpFileNamePara['iAt'] = $BkpInfo.PSBackupFinishDate;
 
 	if (-not $fCopyOnly)
 	{   $BkpFileNamePara['iArcLayer'] = $iArcLayer}

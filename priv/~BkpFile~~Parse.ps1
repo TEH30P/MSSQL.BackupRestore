@@ -1,5 +1,5 @@
 #--------------------------------#
-#!!!TODO: test
+# Parse data backup file name. Returns gathered info.
 function m~BkpFileData~Name~Parse
 (	[String]$iName
 ,	[PSCustomObject]$ioBkpInfo
@@ -38,7 +38,7 @@ function m~BkpFileData~Name~Parse
 	$ioBkpInfo | Add-Member -NotePropertyName PSIsCopyOnly -NotePropertyValue ($null -eq $ioBkpInfo.PSArcLayer);
 }
 #--------------------------------#
-#!!!TODO: test
+# Parse tlog backup file name. Returns gathered info.
 function m~BkpFileTLog~Name~Parse
 (	[String]$iName
 ,	[PSCustomObject]$ioBkpInfo
@@ -59,7 +59,6 @@ function m~BkpFileTLog~Name~Parse
 	$ioBkpInfo | Add-Member -NotePropertyName PSIsCopyOnly -NotePropertyValue ($null -eq $ioBkpInfo.PSLSNLast);
 }
 #--------------------------------#
-#!!!TODO: test
 # Parse backup file name and path. Returns gathered info.
 function m~BkpFile~Path~Parse
 (	[String]$iPath)

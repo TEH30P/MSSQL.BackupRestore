@@ -1,6 +1,6 @@
 #!!!TODO: test it.
 # Will analise active backup file and will try to set strong name for it.
-function m~BkpFile~DataLost~Deactivate
+function m~BkpFilePath~Recover
 (	[String]$iSrvInst
 ,	[String]$iDBName
 ,	[Uri[]]$iaRepoPath

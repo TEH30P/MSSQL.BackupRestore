@@ -25,19 +25,4 @@ namespace NMSSQL.MBkpRst
     ,   FlF = FlFull
     ,   FlD = FlDiff
     };
-    
-    public enum EBkpQItemState
-    {   Nil
-    ,   NewItem 
-    ,   Active  
-    ,   Finished
-    ,   Warning
-    ,   Error
-         
-    ,   New = NewItem
-    ,   Act = Active
-    ,   Fin = Finished
-    ,   Wrn = Warning
-    ,   Err = Error
-    };
 }

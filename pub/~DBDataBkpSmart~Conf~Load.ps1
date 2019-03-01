@@ -1,9 +1,9 @@
-# DB Data smart backup process config parse and verify.
+# DB Data smart backup process config parse and verify. Will generate hashtable with parameters for ~MSSQLBR~DBDataBkpSmart~Do.
 function ~MSSQLBR~DBDataBkpSmart~Conf~Load
 {	[CmdletBinding()]param
-	(	[parameter(Mandatory = 1, Position = 0, ParameterSetName='PSNRaw'     , ValueFromPipeline = 1)]
+	(	[parameter(Mandatory = 1, Position = 0, ParameterSetName='PSNRaw'     , ValueFromPipeline = 1)][Alias('Path', 'P')]
 			[String[]]$iaPath
-	,	[parameter(Mandatory = 1, Position = 0, ParameterSetName='PSNPrepared')][Alias('Path', 'P')]
+	,	[parameter(Mandatory = 1, Position = 0, ParameterSetName='PSNPrepared')][Alias('ConfObj', 'O')]
 			[psobject]$iConf
 	,	[parameter(Mandatory = 0, Position = 1, ParameterSetName='PSNRaw'     )][Alias('PathDef', 'PD')]
 			[String]$iPathDef

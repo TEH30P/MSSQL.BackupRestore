@@ -3,7 +3,6 @@ function m~SMOSrv~Init~d
 #	[Object]$iSrvInst <#in#>
 #	[Microsoft.SqlServer.Management.Common.ServerConnection]$SMOCnn = $null
 #   [Microsoft.SqlServer.Management.Smo.Server]$SMOSrv = $null
-#	[Object]$iSrvInst <#in#>
 {	if ($iSrvInst -is [String])
     {   $SMOCnn = [Microsoft.SqlServer.Management.Common.ServerConnection]::new($iSrvInst);
         $SMOCnn.ApplicationName = "Powershell($mScriptFile)";

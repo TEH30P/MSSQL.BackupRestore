@@ -1,3 +1,4 @@
+# DB Data backup process. Smart and tricky.
 function ~MSSQLBR~DBDataBkpSmart~Do
 {	[CmdletBinding()]param
 	(	[parameter(Mandatory=1, position=0)]
@@ -61,59 +62,65 @@ try
 	[Microsoft.SqlServer.Management.Common.ServerConnection]$SMOCnn = $null;
 	. m~SMOSrv~Init~d; # << $iSrvInst
 	
+	m~BkpDirData~Deactivate $SMOCnn.TrueName $iDBName $iaRepoPath | % {$MsgCll.Add($_)};
+	
 	[Collections.Generic.List[String]]$BkpOldFilePathCll = @();
-	[Int64]$BkpFullSize = 0;
-	[Int64]$BkpDiffSize = 0;
 	
-	Write-Verbose 'Calculate previous backups sizes.';
-
-	foreach ($BkpInfo in m~BkpFileData~Get $iaRepoPath ($SMOCnn.TrueName) $iDBName -iFltLast 1 -iFltBkpJobType 'DBFull' -iFltCopyOnly $false)
-	{	$BkpOldFilePathCll.Add($BkpInfo.PSFilePath);
-		[datetime]$BkpFullAt = $BkpInfo.PSAt;
-	}
-	
-	if ($BkpOldFilePathCll.Count)
-	{	$BkpFullSize = m~BkpFile~SizeGet $BkpOldFilePathCll;
-		$BkpOldFilePathCll.Clear()
-
-		foreach ($BkpInfo in m~BkpFileData~Get $iaRepoPath ($SMOCnn.TrueName) $iDBName -iFltLast 1 -iFltAtMin $BkpFullAt -iFltBkpJobType 'DBDiff')
-		{	$BkpOldFilePathCll.Add($BkpInfo.PSFilePath)}
-
-		$BkpDiffSize = m~BkpFile~SizeGet $BkpOldFilePathCll;
-	}
-	
-	Write-Verbose ">BkpFullSize = $BkpFullSize #$(m~DHex~ToString $BkpFullSize)";
-	Write-Verbose ">BkpDiffSize = $BkpDiffSize #$(m~DHex~ToString $BkpDiffSize)";
+	[psobject]$BkpFullHdr = $null;
+	[psobject]$BkpDiffHdr = $null;
 	
 	[hashtable]$BkpFileNamePara = 
-    @{  iaRepoPath = $iaRepoPath
-    ;   iSrvInst   = $SMOCnn.TrueName
-    ;   iDBName    = $iDBName
+	@{	iaRepoPath = $iaRepoPath
+	;	iSrvInst   = $SMOCnn.TrueName
+	;	iDBName    = $iDBName
 	;	iArcLayer  = $iArcLayer
-    #;   iAt        = [datetime]::Now #!!!REM: backup date will written to backup file name after backup process will done.
+	#;	iAt        = [datetime]::Now #!!!REM: backup date will written to backup file name after backup process will done.
 	};
 	
 	[Boolean]$RedoJob = $true;
 
 	while ($ModeDecision)
-	{	Write-Verbose 'I decide what type of backup will be done.';
+	{	Write-Verbose 'Calculate previous backups sizes.';
+
+		foreach ($BkpInfo in m~BkpFileData~Get $iaRepoPath ($SMOCnn.TrueName) $iDBName -iFltLast 1 -iFltBkpJobType 'DBFull' -iFltCopyOnly $false)
+		{	$BkpOldFilePathCll.Add($BkpInfo.PSFilePath);
+			[datetime]$BkpFullAt = $BkpInfo.PSAt;
+		}
+		
+		if ($BkpOldFilePathCll.Count)
+		{	$BkpFullHdr = m~BkpFile~SQLHdr~Get $SMOSrv ($BkpOldFilePathCll.ToArray());
+			Write-Verbose ">BkpFullSize = $($BkpFullHdr.PSBackupSize) #$(m~DHex~ToString ($BkpFullHdr.PSBackupSize))";
+			$BkpOldFilePathCll.Clear()
+
+			foreach ($BkpInfo in m~BkpFileData~Get $iaRepoPath ($SMOCnn.TrueName) $iDBName -iFltLast 1 -iFltAtMin $BkpFullAt -iFltBkpJobType 'DBDiff')
+			{	$BkpOldFilePathCll.Add($BkpInfo.PSFilePath)}
+
+			if ($BkpOldFilePathCll.Count)
+			{	$BkpDiffHdr = m~BkpFile~SQLHdr~Get $SMOSrv ($BkpOldFilePathCll.ToArray());
+				Write-Verbose ">BkpDiffSize = $($BkpDiffHdr.PSBackupSize) #$(m~DHex~ToString ($BkpDiffHdr.PSBackupSize))";
+			}
+		}
+				
+		Write-Verbose 'I decide what type of backup will be done.';
 		
 		# OMG! No full backup. So... let fix it.
-		if (-not $BkpFullSize)
-		{	$BkpDiff = $false;
-			break;
-		}
-		
-		if ($BkpDiffSize -ge [Int64]($BkpFullSize * $iDiffFullRatioMax))
+		if ($null -eq $BkpFullHdr)
 		{	$BkpDiff = $false;
 			break;
 		}
 
-		if ([Int64]($BkpDiffSize * $iDiffSizeFactor) + $BkpFullSize -ge $iTotalSizeMax)
-		{	$BkpDiff = $false;
-			break;
-		}
+		if ($null -ne $BkpDiffHdr)
+		{	if ($BkpDiffHdr.PSBackupSize -ge [Int64]($BkpFullHdr.PSBackupSize * $iDiffFullRatioMax))
+			{	$BkpDiff = $false;
+				break;
+			}
 
+			if ([Int64]($BkpDiffHdr.PSBackupSize * $iDiffSizeFactor) + $BkpFullHdr.PSBackupSize -ge $iTotalSizeMax)
+			{	$BkpDiff = $false;
+				break;
+			}
+		}
+			
 		$RedoJob = $false;
 
 		break;
@@ -129,10 +136,13 @@ try
 	while ($true)
 	{	if ($BkpDiff) 
 		{	Write-Verbose 'I will perform diff backup.';
+			$BkpDiffHdr = $null;
 			[NMSSQL.MBkpRst.EBkpJobType]$JobType = [NMSSQL.MBkpRst.EBkpJobType]::DBDiff;
 		} 
 		else 
 		{	Write-Verbose 'I will perform full backup.';
+			$BkpDiffHdr = $null;
+			$BkpFullHdr = $null;
 			[NMSSQL.MBkpRst.EBkpJobType]$JobType = [NMSSQL.MBkpRst.EBkpJobType]::DBFull;
 		}
 
@@ -180,26 +190,41 @@ try
 			if (([Int64]$BkpSize = m~BkpFile~SizeGet $BkpFilePathArr))
 			{	if (-not $BkpDiff)
 				{	throw 'Main logic error!'}
-
-				$BkpDiffSize = $BkpSize;
-				#Write-Host ">BkpSize = $BkpSize #$(m~DHex~ToString $BkpSize)";
-
-				if ($BkpDiffSize -ge [Int64]($BkpFullSize * $iDiffFullRatioMax) -or [Int64]($BkpDiffSize * $iDiffSizeFactor) + $BkpFullSize -ge $iTotalSizeMax)
+				
+				if ($BkpSize -ge [Int64]($BkpFullHdr.PSBackupSize * $iDiffFullRatioMax) -or [Int64]($BkpSize * $iDiffSizeFactor) + $BkpFullHdr.PSBackupSize -ge $iTotalSizeMax)
 				{	$Local:SMOBkp.Abort();
 					$BkpProcess = $false;
 					$RedoJob = $true;
 					
-					Write-Verbose 'Backup process aborted.';			
+					Write-Verbose 'Backup process aborted.';
 					break;
 				}
 			}
 		}
 
-		if (-not $RedoJob)
+		if (-not $RedoJob -and $Local:SMOBkp.AsyncStatus.ExecutionStatus -eq 'Succeeded')
+		{	$BkpDiffHdr = m~BkpFile~SQLHdr~Get $SMOSrv $BkpFilePathArr;
+			m~QueueItem~HeartBit $iaRepoPath $Local:QIKey;
+			
+			# If backup chain broken will do full backup.
+			if ($BkpDiffHdr.PSDatabaseBackupLSN -ne $BkpFullHdr.PSFirstLSN)
+			{	$RedoJob = $true;
+				$MsgCll.Add('Backup chain broken.');
+			}
+
+			if ($BkpDiffHdr.PSBackupSize -ge [Int64]($BkpFullHdr.PSBackupSize * $iDiffFullRatioMax))
+			{	$RedoJob = $true;
+				$MsgCll.Add('Diff backup is too large.');
+			}
+		}
+
+		if ($RedoJob)
+		{	Write-Verbose 'Backup rejected restarting.'}
+		else
 		{	Write-Verbose 'Backup process completed.';
 			break;
 		}
-
+		
 		$BkpDiff = $false;
 		
 		if ($Local:SMOBkp.AsyncStatus.ExecutionStatus -eq 'InProgress')
@@ -226,24 +251,60 @@ try
 		{	throw [Exception]::new("Unknown SMO.Backup state. [$_]")}
 	}
 	
+	[Int64]$BkpFullSize = 0;
+	[Int64]$BkpDiffSize = 0;
+
 	if ($BkpDiff)
-	{	$BkpDiffSize = m~BkpFile~SizeGet $BkpFilePathArr}
+	{	if ($null -ne $BkpFullHdr)
+		{	$BkpFullSize = $BkpFullHdr.PSBackupSize}
+		else 
+		{	$BkpOldFilePathCll.Clear();
+
+			foreach ($BkpInfo in m~BkpFileData~Get $iaRepoPath ($SMOCnn.TrueName) $iDBName -iFltLast 1 -iFltBkpJobType 'DBFull' -iFltCopyOnly $false)
+			{	$BkpOldFilePathCll.Add($BkpInfo.PSFilePath);
+				[datetime]$BkpFullAt = $BkpInfo.PSAt;
+			}
+
+			if ($BkpOldFilePathCll.Count)
+			{	$BkpFullHdr = m~BkpFile~SQLHdr~Get $SMOSrv ($BkpOldFilePathCll.ToArray())
+				$BkpFullSize = $BkpFullHdr.PSBackupSize;
+				Write-Verbose ">BkpFullSize = $($BkpFullHdr.PSBackupSize) #$(m~DHex~ToString ($BkpFullHdr.PSBackupSize))";
+			}
+		}
+		
+		if ($null -eq $BkpDiffHdr)
+		{	$BkpDiffHdr = m~BkpFile~SQLHdr~Get $SMOSrv $BkpFilePathArr}
+		
+		$BkpFileNamePara['iAt']  = $BkpDiffHdr.PSBackupFinishDate;
+		$BkpDiffSize = $BkpDiffHdr.PSBackupSize;
+		Write-Verbose ">BkpDiffSize = $($BkpDiffHdr.PSBackupSize) #$(m~DHex~ToString ($BkpDiffHdr.PSBackupSize))";
+	}
 	else
-	{	$BkpDiffSize = 0;
-		$BkpFullSize = m~BkpFile~SizeGet $BkpFilePathArr;
+	{	if ($null -eq $BkpFullHdr)
+		{	$BkpFullHdr = m~BkpFile~SQLHdr~Get $SMOSrv $BkpFilePathArr}
+		
+		$BkpFileNamePara['iAt']  = $BkpFullHdr.PSBackupFinishDate;
+		$BkpFullSize = $BkpFullHdr.PSBackupSize;
+		Write-Verbose ">BkpFullSize = $($BkpFullHdr.PSBackupSize) #$(m~DHex~ToString ($BkpFullHdr.PSBackupSize))";
+		Write-Verbose ">BkpDiffSize = 0 #$(0)";
 	}
 
-	Write-Verbose ">BkpFullSize = $BkpFullSize #$(m~DHex~ToString $BkpFullSize)";
-	Write-Verbose ">BkpDiffSize = $BkpDiffSize #$(m~DHex~ToString $BkpDiffSize)";
+	m~QueueItem~HeartBit $iaRepoPath $Local:QIKey;
 
-	if ($BkpDiff -and $BkpFullSize -eq 0)
-	{	$MsgCll.Add('No full backup found.')}
+	if ($BkpDiff)
+	{	if ($null -eq $BkpFullHdr)
+		{	$MsgCll.Add('No full backup found.')}
+		elseif ($BkpDiffHdr.PSDatabaseBackupLSN -ne $BkpFullHdr.PSFirstLSN)
+		{	$MsgCll.Add('Backup chain broken.')}
+	}
+	
+	if ($null -ne $BkpFullHdr)
+	{	if ($BkpDiffSize -ge [Int64]($BkpFullSize * $iDiffFullRatioMax))
+		{	$MsgCll.Add('Diff backup is too large.')}
 
-	if ($BkpDiffSize -ge [Int64]($BkpFullSize * $iDiffFullRatioMax))
-	{	$MsgCll.Add('Diff backup is too large.')}
-
-	if ([Int64]($BkpDiffSize * $iDiffSizeFactor) + $BkpFullSize -ge $iTotalSizeMax)
-	{	$MsgCll.Add('Total (diff+full) backup is too large.')}
+		if ([Int64]($BkpDiffSize * $iDiffSizeFactor) + $BkpFullSize -ge $iTotalSizeMax)
+		{	$MsgCll.Add('Total (diff+full) backup is too large.')}
+	}
 
 	if ($iStartAt + $iDuration -lt [datetime]::now)
 	{	$MsgCll.Add('Backup process is not fit into the time window.')}
@@ -258,8 +319,6 @@ try
 	else 
 	{	m~QueueItem~StateSet $iaRepoPath $Local:QIKey 'Act' 'Fin'}
 	
-	$BkpInfo = m~BkpFile~SQLHdr~Get $SMOSrv $BkpFilePathArr;
-	$BkpFileNamePara['iAt'] = $BkpInfo.PSBackupStartDate;
 	[Int32]$Idx = -1;
 	
 	foreach($BkpFilePathIt in m~BkpFilePath~Data~Gen @BkpFileNamePara)
@@ -293,11 +352,4 @@ finally
 		
 	if ($fAsShJob -and $null -ne $MsgCll -and $MsgCll.Count)
 	{	~SJLog~Msg~New Wrn $LogDate ($MsgCll.ToArray()) -iLogSrc ($MyInvocation.MyCommand)}
-	
-	<#!!!REM: if this files exists better keep him.
-	foreach ($BkpFilePathIt in $Local:BkpFilePathArr)
-	{	if ([IO.File]::Exists($BkpFilePathIt))
-		{	[IO.File]::Delete($BkpFilePathIt)}
-	}
-	#>
 }}

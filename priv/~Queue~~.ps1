@@ -17,6 +17,30 @@
 #--------------------------------#
 [string[]]${m~Queue~aStateFSName} = @('New', 'Act', 'Fin', 'Wrn', 'Err');
 #--------------------------------#
+# Get queue dir path.
+function m~QueueDirPathRoot~Get
+(	[Uri[]]$iaRepoPath
+,	[NMSSQL.MBkpRst.EBkpQItemState]$iState = 'Nil'
+)
+{	[Collections.Generic.HashSet[Uri]]$aRepoPass = @();
+
+	foreach ($RepoIt in $iaRepoPath)
+	{	if (-not $aRepoPass.Add($RepoIt))
+		{	continue}
+		
+		if ($RepoIt.Scheme -ne [Uri]::UriSchemeFile)
+		{	throw [InvalidOperationException]::new("Invalid repo path. Only 'UriSchemeFile' scheme supported, got $($RepoIt.Scheme).")}
+
+		if ($iState -eq 'Nil') 
+		{	foreach($QueDirIt in ${m~Queue~aStateFSName})
+			{	[IO.Path]::Combine($RepoIt.LocalPath, "queue\$QueDirIt")} #<--
+		}
+		else 
+		{	[IO.Path]::Combine($RepoIt.LocalPath, "queue\$(${m~Queue~dStateFSName}[[string]$iState])")} #<--
+	}
+}
+
+#--------------------------------#
 # Get all queue items.
 function m~Queue~Get
 (	[Uri[]]$iaRepoPath

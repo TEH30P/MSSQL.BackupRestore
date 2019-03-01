@@ -1,10 +1,10 @@
 # Will research some backup file and will generate it name.
 function m~BkpFile~Name~Gen
-(   [Microsoft.SqlServer.Management.Smo.Server]$iSrvInstObj
+(   [Microsoft.SqlServer.Management.Smo.Server]$iSrvObj
 ,	[Uri[]]$iaRepoPath
 ,   [String[]]$iaBkpFilePath
 )
-{	$BkpInfo = m~BkpFile~SQLHdr~Get $iSrvInstObj $iaBkpFilePath;
+{	$BkpInfo = m~BkpFile~SQLHdr~Get $iSrvObj $iaBkpFilePath;
 			
 	#!!!TODO: No DB object name.
 	
@@ -42,7 +42,7 @@ function m~BkpFile~Name~Gen
 	}
 
 	if ($JobType -eq 'TLog')
-	{	return m~BkpFilePath~TLog~Gen $BkpInfo.PSServerName $BkpInfo.PSDatabaseName $iaRepoPath $BkpInfo.PSBackupStartDate $BkpInfo.PSLastLSN}
+	{	return m~BkpFilePath~TLog~Gen $BkpInfo.PSServerName $BkpInfo.PSDatabaseName $iaRepoPath $BkpInfo.PSBackupFinishDate $BkpInfo.PSLastLSN}
 	else 
-	{	return m~BkpFilePath~Data~Gen $BkpInfo.PSServerName $BkpInfo.PSDatabaseName $iaRepoPath $JobType $DBObjName 0 $BkpInfo.PSBackupStartDate}
+	{	return m~BkpFilePath~Data~Gen $BkpInfo.PSServerName $BkpInfo.PSDatabaseName $iaRepoPath $JobType $DBObjName 0 $BkpInfo.PSBackupFinishDate}
 }

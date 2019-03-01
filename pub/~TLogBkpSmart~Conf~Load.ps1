@@ -1,9 +1,9 @@
-# DB TLog smart backup process config parse and verify.
+# DB TLog smart backup process config parse and verify. Will generate hashtable with parameters for ~MSSQLBR~TLogBkpSmart~Do.
 function ~MSSQLBR~TLogBkpSmart~Conf~Load
 {	[CmdletBinding()]param
-	(	[parameter(Mandatory = 1, Position = 0, ParameterSetName='PSNRaw'     , ValueFromPipeline = 1)]
+	(	[parameter(Mandatory = 1, Position = 0, ParameterSetName='PSNRaw'     , ValueFromPipeline = 1)][Alias('Path', 'P')]
 			[String[]]$iaPath
-	,	[parameter(Mandatory = 1, Position = 0, ParameterSetName='PSNPrepared')][Alias('Path', 'P')]
+	,	[parameter(Mandatory = 1, Position = 0, ParameterSetName='PSNPrepared')][Alias('ConfObj', 'O')]
 			[psobject]$iConf
 	,	[parameter(Mandatory = 0, Position = 1, ParameterSetName='PSNRaw'     )][Alias('PathDef', 'PD')]
 			[String]$iPathDef

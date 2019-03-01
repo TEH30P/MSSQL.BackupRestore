@@ -1,4 +1,4 @@
-# DB TLog smart backup process.
+# DB TLog backup process. Smart and tricky.
 function ~MSSQLBR~TLogBkpSmart~Do
 {	[CmdletBinding()]param 
 	(	[parameter(Mandatory=1, position=0)]
@@ -75,6 +75,7 @@ try
 	
 	[Boolean]$DoInit = $true;
 	[Int32]$ErrCnt = 0;
+	[Int32]$WrnCnt = 0;
 	[NMSSQL.MBkpRst.EBkpJobType]$JobType = [NMSSQL.MBkpRst.EBkpJobType]::TLog;
 	[datetime]$StartIt = $iStartAt;
 	
@@ -101,10 +102,12 @@ try
 			Write-Verbose 'Connect to sql server.';
 			$SMOCnn.Connect();
 
-			if ($ModeCll.Contains('ChkBkpAge'))
-			{	[datetime]$BkpLast = [datetime]::Now - $iAgeTrg;
-				m~BkpFileTLog~Get $iaRepoPath ($SMOCnn.TrueName) $iDBName -iFltLast 1 | % {$BkpLast = $_.PSAt};
-			}
+			$BkpFilePathArr = m~BkpFileTLog~Get $iaRepoPath ($SMOCnn.TrueName) $iDBName -iFltLast 1 | % {$_.PSFilePath};
+			
+			if ($BkpFilePathArr.Count)
+			{	$BkpInfoLast = m~BkpFile~SQLHdr~Get $SMOSrv $BkpFilePathArr}
+			else 
+			{	$BkpInfoLast = New-Object psobject -Property @{PSBackupStartDate = ([datetime]::Now - $iAgeTrg); PSLastLSN = ([decimal]::Zero)}}
 		}
 		
 		try 
@@ -112,7 +115,9 @@ try
 			{	Write-Verbose 'Create a queue item.';
 				$Local:QIKey = m~Queue~Bkp~New $iaRepoPath $iPriority $JobType ($SMOCnn.TrueName) $iDBName $iConfPath;
 			}
-						
+			
+			m~BkpDirTLog~Deactivate $SMOCnn.TrueName $iDBName $iaRepoPath | % {$MsgCll.Add($_)};	
+
 			#
 			# Here I make decition what to do.
 			#
@@ -121,9 +126,9 @@ try
 			[Boolean]$BkpCopyOnly = $false;
 
 			if ($ModeCll.Contains('ChkBkpAge'))
-			{	$DoBkp = $DoBkp -or ($BkpLast + $iAgeTrg -le [datetime]::Now + [timespan]($Period.Ticks -shr 1))
+			{	$DoBkp = $DoBkp -or ($BkpInfoLast.PSBackupStartDate + $iAgeTrg -le [datetime]::Now + [timespan]($Period.Ticks -shr 1))
                 Write-Verbose ">Now       = $(Get-Date -f 'yyyy-MM-dd HH:mm:ss')";
-                Write-Verbose ">LastBkpAt = $($BkpLast.ToString('yyyy-MM-dd HH:mm:ss'))";
+                Write-Verbose ">LastBkpAt = $($BkpInfoLast.PSBackupStartDate.ToString('yyyy-MM-dd HH:mm:ss'))";
 			}
 			elseif ($ModeCll.Contains('DoCopyOnlyBkp')) 
 			{	$DoBkp = $true}
@@ -219,10 +224,10 @@ try
 				else 
 				{	m~QueueItem~StateSet $iaRepoPath $Local:QIKey 'Act' 'Fin'}
 				
-				Write-Verbose 'Read bkp hdr to perform renames.';
+				Write-Verbose 'Read bkp hdr to perform renames and validation.';
 
 				$BkpInfo = m~BkpFile~SQLHdr~Get $SMOSrv $BkpFilePathArr;
-				$BkpFileNamePara['iAt'] = $BkpInfo.PSBackupStartDate;
+				$BkpFileNamePara['iAt'] = $BkpInfo.PSBackupFinishDate;
 			
 				if ($BkpCopyOnly)
 				{	$BkpFileNamePara.Remove('iLSNLast')}
@@ -237,9 +242,15 @@ try
 				}
 				
 				$BkpFilePathArr = @();
+				
+				if ($BkpInfoLast.PSLastLSN -lt $BkpInfo.PSFirstLSN)
+				{	if (-not $MsgCll.Count)
+					{	m~QueueItem~StateSet $iaRepoPath $Local:QIKey 'Fin' 'Wrn'}
 
-				if ($ModeCll.Contains('ChkBkpAge') -and -not $BkpCopyOnly)
-				{	$BkpLast = $BkpInfo.PSBackupStartDate}
+					$MsgCll.Add('Backup chain broken. Possibly some other t-log backup files is missing.')
+				}
+
+				$BkpInfoLast = $BkpInfo;
 			}
 			
 			$DoInit = $false;
@@ -268,6 +279,7 @@ try
 			if ($fAsShJob -and $null -ne $MsgCll -and $MsgCll.Count)
 			{	~SJLog~Msg~New Wrn $LogDate ($MsgCll.ToArray()) -iLogSrc ($MyInvocation.MyCommand)}
 
+			$WrnCnt += $MsgCll.Count;
 			$MsgCll.Clear();
 			$Local:QIKey = [String]::Empty;
 			$Local:SMOBkp = $null;
@@ -292,7 +304,12 @@ catch
 }
 finally
 {	if ($fAsShJob -and $null -ne $MsgCll -and $MsgCll.Count)
-	{	~SJLog~Msg~New Wrn $LogDate ($MsgCll.ToArray()) -iLogSrc ($MyInvocation.MyCommand)}
+	{	~SJLog~Msg~New Wrn $LogDate ($MsgCll.ToArray()) -iLogSrc ($MyInvocation.MyCommand);
+		$WrnCnt += $MsgCll.Count;
+	}
+
+	if ($fAsShJob -and $WrnCnt)
+	{	~SJLog~Msg~New Wrn $LogDate $ParamMsgCll -fAsKeyValue -iKey 'param' -iLogSrc ($MyInvocation.MyCommand)}
 
 	if ($fAsShJob -and $ErrCnt)
 	{	~SJLog~Msg~New Err $LogDate $ParamMsgCll -fAsKeyValue -iKey 'param' -iLogSrc ($MyInvocation.MyCommand)}

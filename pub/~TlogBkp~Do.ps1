@@ -20,6 +20,7 @@ function ~MSSQLBR~TlogBkp~Do
 	);
 try
 {	[datetime]$LogDate = [datetime]::Now;
+	[Collections.Generic.List[String]]$MsgCll = [Collections.Generic.List[String]]::new();
 	[String[]]$ParamMsgCll = m~BkpAttr~LogMsg~Gen $iSrvInst $iDBName $iaRepoPath;
 
 	[NMSSQL.MBkpRst.EBkpJobType]$JobType = [NMSSQL.MBkpRst.EBkpJobType]::TLog;
@@ -32,6 +33,8 @@ try
 	[Microsoft.SqlServer.Management.Smo.Server]$SMOSrv = $null;
 	[Microsoft.SqlServer.Management.Common.ServerConnection]$SMOCnn = $null;
 	. m~SMOSrv~Init~d; # << $iSrvInst
+	
+	m~BkpDirTLog~Deactivate $SMOCnn.TrueName $iDBName $iaRepoPath | % {$MsgCll.Add($_)};
 
 	[hashtable]$BkpFileNamePara = 
 	@{  iaRepoPath = $iaRepoPath
@@ -81,10 +84,13 @@ try
 	
 	$Local:SMOBkp = $null;
 
-	m~QueueItem~StateSet $iaRepoPath $Local:QIKey 'Act' 'Fin';
+	if ($MsgCll.Count)
+	{	m~QueueItem~StateSet $iaRepoPath $Local:QIKey 'Act' 'Wrn'}
+	else 
+	{	m~QueueItem~StateSet $iaRepoPath $Local:QIKey 'Act' 'Fin'}
 
 	$BkpInfo = m~BkpFile~SQLHdr~Get $SMOSrv $Local:BkpFilePathArr;
-	$BkpFileNamePara['iAt'] = $BkpInfo.PSBackupStartDate;
+	$BkpFileNamePara['iAt'] = $BkpInfo.PSBackupFinishDate;
 
 	if ($fCopyOnly)
 	{	$BkpFileNamePara.Remove('iLSNLast')}

@@ -36,14 +36,14 @@ try
 		if ($iActivedCntMax)
 		{	foreach ($QIIt in m~Queue~Get $iaRepoPath 'New')
 			{	if ($ActCnt)
-				{	m~QueueItem~StateSet ($QIIt.PSRepo) ($QIIt.PSKey) ($QIIt.PSState) 'Act';
+				{	try {m~QueueItem~StateSet ($QIIt.PSRepo) ($QIIt.PSKey) ($QIIt.PSState) 'Act'} catch {};
 					$ActCnt--;
 				}
 			}
 		}
 		else 
 		{	foreach ($QIIt in m~Queue~Get $iaRepoPath 'New')
-			{	m~QueueItem~StateSet ($QIIt.PSRepo) ($QIIt.PSKey) ($QIIt.PSState) 'Act'}				
+			{	try {m~QueueItem~StateSet ($QIIt.PSRepo) ($QIIt.PSKey) ($QIIt.PSState) 'Act'} catch {}}
 		}
 	}
 

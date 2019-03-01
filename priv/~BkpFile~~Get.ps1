@@ -38,7 +38,7 @@ function m~BkpFile~Get
 				
 				#!!!WRN: Hardcode check that is date of backup is <null>.
 
-				for ([Int32]$Idx = 0; $Idx -lt $FilePathCll.Count; $Idx++)
+				for ([Int32]$Idx = $FilePathCll.Count; ($Idx--);)
 				{	[String]$FileKey = [IO.Path]::GetFileName($FilePathCll[$Idx]).Substring(0, 15);
 					
 					if ($null -eq (m~FSName~DateTime~NParse $FileKey))
@@ -108,7 +108,7 @@ function m~BkpFileTLog~Get
 		$FltLateLast = $iFltLast;
 	}
 	
-	foreach ($BkpInfo in  m~BkpFile~Get $iaRepoPath TLog $iFltSrvInst $iFltDBName $iFltEarlyLast)
+	foreach ($BkpInfo in  m~BkpFile~Get $iaRepoPath TLog $iFltSrvInst $iFltDBName $FltEarlyLast)
 	{	m~BkpFileTLog~Name~Parse ([IO.Path]::GetFileName($BkpInfo.PSFilePath)) -ioBkpInfo $BkpInfo;
 		
 		if ($null -ne $iFltAtMin)
