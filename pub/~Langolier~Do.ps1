@@ -1,3 +1,5 @@
+New-Alias -Name Invoke-MSSQLBkpLangolier -Value '~MSSQLBR~Langolier~Do' -Force;
+
 # Will Remove outdated backups.
 function ~MSSQLBR~Langolier~Do
 {   [CmdletBinding()]param

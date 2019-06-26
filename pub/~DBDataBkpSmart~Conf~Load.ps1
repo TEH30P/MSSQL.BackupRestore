@@ -1,3 +1,5 @@
+New-Alias -Name Import-MSSQLDBDataBkpConf  -Value '~MSSQLBR~DBDataBkpSmart~Conf~Load' -Force;
+
 # DB Data smart backup process config parse and verify. Will generate hashtable with parameters for ~MSSQLBR~DBDataBkpSmart~Do.
 function ~MSSQLBR~DBDataBkpSmart~Conf~Load
 {	[CmdletBinding()]param

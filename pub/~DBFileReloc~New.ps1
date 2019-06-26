@@ -1,3 +1,5 @@
+New-Alias -Name New-MSSQLBRDBFileRelocRule -Value '~MSSQLBR~DBFileReloc~New' -Force;
+
 # Will create database file relocation rules.
 function ~MSSQLBR~DBFileReloc~New
 {	[CmdletBinding()]param
@@ -11,7 +13,7 @@ function ~MSSQLBR~DBFileReloc~New
 			[hashtable]$idTypeRel
 	,	[parameter(Mandatory = 1              , ParameterSetName='PSNSimple')][Alias('DataDir')]
 			[String]$iDataDir
-	,	[parameter(Mandatory = 1              , ParameterSetName='PSNSimple')][Alias('TLogDir')]
+	,	[parameter(Mandatory = 0              , ParameterSetName='PSNSimple')][Alias('TLogDir')]
 			[String]$iTLogDir
 	,	[parameter(Mandatory = 0              , ParameterSetName='SNSimple')][Alias('AppendBkpDate')]
 			[switch]$fAppendBkpDate

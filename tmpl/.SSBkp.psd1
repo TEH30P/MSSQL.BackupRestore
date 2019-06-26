@@ -12,8 +12,8 @@
       }
     };
     'SL-Repo'= @(
-      'file://a:/dummy0';
-      'file://a:/dummy1'
+      'file://a:/dummy0'
+    , 'file://a:/dummy1'
     );
     'OV-DataBkpRule'= @{
       'SV-DiffFullRatioMax'= 0.25;

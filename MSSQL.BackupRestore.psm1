@@ -30,13 +30,14 @@ else
 	,	"Microsoft.SqlServer.SmoExtended, Version=$($iSMOVer.ToString()), Culture=neutral, PublicKeyToken=89845dcd8080cc91"
 }
 
-#!!!DBG: Debug version
+<#!!!REM: Debug version
 function m~PSModuleComponent~Load
 (	[string]$FileName)
 {	. $FileName
 	Write-Warning "Loaded '$FileName': for test/dev."
 }
-<#!!!REM: Release version
+#>
+#!!!REM: Release version
 function m~PSModuleComponent~Load
 (	[string]$FileName)
 {	$ExecutionContext.InvokeCommand.InvokeScript(
@@ -78,4 +79,8 @@ foreach ($FileName in [IO.Directory]::GetFiles($FileName))
 	}
 }
 
-Export-ModuleMember -Function '~MSSQLBR~*' -Cmdlet '~MSSQLBR~*' -Alias '*-MSSQLBkp*', '*-MSSQLRst*';
+Export-ModuleMember `
+	-Function '~MSSQLBR~*' `
+	-Cmdlet '~MSSQLBR~*' `
+	-Alias 'New-MSSQLBkpFileName', 'New-MSSQLBkpRepo', 'Select-MSSQLBkpFile', 'New-MSSQLDBDataBkp', 'Import-MSSQLDBDataBkpConf', 'Invoke-MSSQLDBDataBkp', 'New-MSSQLBRDBFileRelocRule', 'Test-MSSQLBRDBFileRelocRule', 'Invoke-MSSQLDBRst', 'Add-MSSQLBRDBSnapshot', 'Remove-MSSQLBRDBSnapshot', 'Import-MSSQLBkpLangolierConf', 'Invoke-MSSQLBkpLangolier', 'Invoke-MSSQLBRQueueMtn', 'New-MSSQLDBTLogBkp', 'Import-MSSQLDBTLogBkpConf', 'Invoke-MSSQLDBTLogBkp' `
+;

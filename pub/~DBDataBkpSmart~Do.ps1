@@ -1,3 +1,5 @@
+New-Alias -Name Backup-MSSQLDBDataSmart -Value '~MSSQLBR~DBDataBkpSmart~Do';
+
 # DB Data backup process. Smart and tricky.
 function ~MSSQLBR~DBDataBkpSmart~Do
 {	[CmdletBinding()]param
@@ -28,7 +30,7 @@ function ~MSSQLBR~DBDataBkpSmart~Do
 	,	[parameter(Mandatory=0)]
 			[Byte]$iPriority = 0
 	,	[parameter(Mandatory=0)]
-			[switch]$fCompression
+			[switch]$fCompression = $true
 	,	[parameter(Mandatory=0)]
 			[switch]$fAsShJob
 	,	[parameter(Mandatory=0)]
@@ -207,7 +209,7 @@ try
 			m~QueueItem~HeartBit $iaRepoPath $Local:QIKey;
 			
 			# If backup chain broken will do full backup.
-			if ($BkpDiffHdr.PSDatabaseBackupLSN -ne $BkpFullHdr.PSFirstLSN)
+			if ($BkpDiffHdr.PSDatabaseBackupLSN -ne $BkpFullHdr.PSCheckpointLSN)
 			{	$RedoJob = $true;
 				$MsgCll.Add('Backup chain broken.');
 			}
@@ -294,7 +296,7 @@ try
 	if ($BkpDiff)
 	{	if ($null -eq $BkpFullHdr)
 		{	$MsgCll.Add('No full backup found.')}
-		elseif ($BkpDiffHdr.PSDatabaseBackupLSN -ne $BkpFullHdr.PSFirstLSN)
+		elseif ($BkpDiffHdr.PSDatabaseBackupLSN -ne $BkpFullHdr.PSCheckpointLSN)
 		{	$MsgCll.Add('Backup chain broken.')}
 	}
 	

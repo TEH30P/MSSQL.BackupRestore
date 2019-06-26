@@ -1,3 +1,5 @@
+New-Alias -Name Invoke-MSSQLBRQueueMtn -Value '~MSSQLBR~QueueMtn~Do' -Force;
+
 # Queue maintenance process. Remove old or activate new items.
 function ~MSSQLBR~QueueMtn~Do
 {   param
@@ -26,7 +28,13 @@ try
 
 		foreach ($QIIt in m~Queue~Get $iaRepoPath 'Act')
 		{	if ([IO.FileInfo]::new($QIIt.PSFilePath).LastWriteTime -lt $Oldest)
-			{	m~QueueItem~StateSet ($QIIt.PSRepo) ($QIIt.PSKey) ($QIIt.PSState) 'Err'}
+			{	try 
+				{	m~QueueItem~StateSet ($QIIt.PSRepo) ($QIIt.PSKey) ($QIIt.PSState) 'Err'} 
+				catch 
+				{	if (m~QueueItem~Exists ($QIIt.PSRepo) ($QIIt.PSKey) ($QIIt.PSState))
+					{	throw}
+				}
+			}
 			else
 			{	$ActCnt++}
 		}

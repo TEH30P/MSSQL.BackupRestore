@@ -1,3 +1,5 @@
+New-Alias -Name Backup-MSSQLDBData -Value '~MSSQLBR~DBDataBkp~Do' -Force;
+
 # DB Data backup process.
 function ~MSSQLBR~DBDataBkp~Do
 {	param
@@ -14,7 +16,7 @@ function ~MSSQLBR~DBDataBkp~Do
 	,   [parameter(Mandatory=0)]
 			[switch]$fDiff
 	,   [parameter(Mandatory=0)]
-			[switch]$fCompression
+			[switch]$fCompression = $true
 	,   [parameter(Mandatory=0)]
 			[switch]$fCopyOnly
 	,   [parameter(Mandatory=0)]

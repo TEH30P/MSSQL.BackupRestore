@@ -1,3 +1,5 @@
+New-Alias -Name Select-MSSQLBkpFile  -Value '~MSSQLBR~BkpRepo~Search' -Force;
+
 # Search bkp files in repo.
 function ~MSSQLBR~BkpRepo~Search
 {	param

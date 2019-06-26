@@ -1,3 +1,5 @@
+New-Alias -Name Backup-MSSQLDBTLogBkpSmart -Value '~MSSQLBR~TLogBkpSmart~Do' -Force;
+
 # DB TLog backup process. Smart and tricky.
 function ~MSSQLBR~TLogBkpSmart~Do
 {	[CmdletBinding()]param 
@@ -26,7 +28,7 @@ function ~MSSQLBR~TLogBkpSmart~Do
 	,	[parameter(Mandatory=0)]
 			[Byte]$iPriority = 0
 	,	[parameter(Mandatory=0)]
-			[switch]$fCompression
+			[switch]$fCompression = $true
 	,   [parameter(Mandatory=0)]
 			[switch]$fAsShJob
 	,	[parameter(Mandatory=0)]

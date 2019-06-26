@@ -1,3 +1,5 @@
+New-Alias -Name Restore-MSSQLDB -Value '~MSSQLBR~DBRstSmart~Do' -Force;
+
 # Nice and sweet database restore.
 function ~MSSQLBR~DBRstSmart~Do
 {	[CmdletBinding()]param
@@ -18,6 +20,8 @@ function ~MSSQLBR~DBRstSmart~Do
 	,   [parameter(Mandatory=0)]
 			[ValidateSet('', 'f', 'df', 'fd', 'fl', 'lf', 'dfl', 'fdl', 'ldf', 'd', 'l', 'dl', 'ld')]
 			[String]$iOperAllow = 'fd'
+	,   [parameter(Mandatory=0)]
+			[switch]$fStandby
 	,	[parameter(Mandatory=0)]
 			[switch]$fNoRecovery
 	,	[parameter(Mandatory=0)]
@@ -213,6 +217,7 @@ end
 		[Int32]$BkpCnt = $BkpTLogInfoCll.Count;
 		[Int32]$WaitDurationSec = 60;
 		[Boolean]$RstNoRecovery = $true;
+		[Boolean]$RstStandby = $false;
 		[Boolean]$RstReplace = $fReplace;
 		[Microsoft.SqlServer.Management.Smo.RestoreActionType]$RstAct = 'Database';
 
@@ -287,6 +292,7 @@ end
 			
 			if ($BkpIdx -eq $BkpCnt)
 			{	$RstNoRecovery = $fNoRecovery;
+				$RstStandby = $fStandby;
 				
 				if ($PointInTime)
 				{	[DateTime]$DTPointInTime = $iTimeTrg}
@@ -298,6 +304,7 @@ end
 				($BkpFileCll.ToArray()) `
 				$RstReplace `
 				$RstNoRecovery `
+				$RstStandby `
 				$DBFRelocCll `
 				$iSrvInstSrc `
 				$iDBNameSrc `

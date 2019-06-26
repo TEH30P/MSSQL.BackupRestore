@@ -3,16 +3,17 @@ function m~SQL~DBTLogSpace~Get
 (	[Microsoft.SqlServer.Management.Common.ServerConnection]$iSMOCnn
 ,	[string]$iDBName	
 )
-{	[String]$DBNamePara = '[' + $iDBName.Replace(']', ']]') + ']';
-	[String]$SQL = @"
-		DECLARE @sql nvarchar(4000)
-		SET @sql 
-		=	'USE $DBNamePara;
-' 		+	'SELECT	used_p = SUM(CAST(FILEPROPERTY([name] , ''SpaceUsed'') as BIGINT)) 
-' 		+	'FROM	sys.[database_files] 
-' 		+	'WHERE	[type] = 1;'
-		EXEC(@sql)
-"@		;
+{	[Data.DataTable]$Tbl = [Data.DataTable]::new();
+	$Tbl.Load($iSMOCnn.ExecuteReader('DBCC SQLPERF (LOGSPACE)'), 'OverwriteChanges');
 	
-	return [Int64]$iSMOCnn.ExecuteScalar($SQL) * 8kb;
+	[System.Data.DataRow]$TRowIt = $null;
+	[Int32]$DBNameColIdx = $Tbl.Columns['Database Name'].Ordinal;
+
+	foreach($TRowIt in $Tbl.Rows)
+	{	if ($iDBName -cne $TRowIt[$DBNameColIdx])
+		{	continue}
+
+		[Int64]$TLogSizeP = ([Int64][Math]::Floor([Double]$TRowIt['Log Size (MB)']) * 1MB + [Int64](([Double]$TRowIt['Log Size (MB)'] - [Math]::Floor([Double]$TRowIt['Log Size (MB)'])) * 1MB)) / 8KB;
+		return [Int64]($TLogSizeP * ([Double]$TRowIt['Log Space Used (%)'] / 100)) * 8KB;
+	}
 }

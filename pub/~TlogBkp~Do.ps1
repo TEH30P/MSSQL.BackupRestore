@@ -1,3 +1,5 @@
+New-Alias -Name Backup-MSSQLDBTLog -Value '~MSSQLBR~TlogBkp~Do' -Force;
+
 # DB TLog backup process.
 function ~MSSQLBR~TlogBkp~Do
 {	[CmdletBinding()]param 
@@ -10,7 +12,7 @@ function ~MSSQLBR~TlogBkp~Do
 	,   [parameter(Mandatory=0)]
 			[Byte]$iPriority = 0
 	,	[parameter(Mandatory=0)]
-			[switch]$fCompression
+			[switch]$fCompression = $true
 	,	[parameter(Mandatory=0)]
 			[switch]$fCopyOnly
 	,   [parameter(Mandatory=0)]

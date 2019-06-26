@@ -1,3 +1,5 @@
+New-Alias -Name New-MSSQLBkpFileName  -Value '~MSSQLBR~BkpFile~Name~Gen' -Force;
+
 # Generate backup file name from SQL Backup header data.
 function ~MSSQLBR~BkpFile~Name~Gen
 {	param

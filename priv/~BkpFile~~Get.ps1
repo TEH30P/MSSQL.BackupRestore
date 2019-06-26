@@ -133,7 +133,7 @@ function m~BkpFileTLog~Get
 		{	$BkpInfo} #<--
 		else
 		{	[Void]$LastFileCll.AddLast($BkpInfo);
-			[Void]$LastCll.Add($BkpInfo.PSAt)
+			[Void]$LastCll.Add($BkpInfo.PSAt);
 			
 			if ($LastCll.Count -gt $FltLateLast)
 			{	[datetime]$AtFirst = $LastCll | Select-Object -First 1;

@@ -48,7 +48,12 @@ function m~DBFReloc~RuleStd~New
 	[System.Collections.IDictionary]$TypeRelDic = [System.Collections.Generic.Dictionary[String, String]]::new();
 	[void]$TypeRelDic.Add('D', $iDataDir.TrimEnd([IO.Path]::DirectorySeparatorChar));
 	[void]$TypeRelDic.Add('S', $iDataDir.TrimEnd([IO.Path]::DirectorySeparatorChar));
-	[void]$TypeRelDic.Add('L', $iTLogDir.TrimEnd([IO.Path]::DirectorySeparatorChar));
+
+	if ([String]::IsNullOrEmpty($iTLogDir))
+	{	[void]$TypeRelDic.Add('L', $iDataDir.TrimEnd([IO.Path]::DirectorySeparatorChar))}
+	else 
+	{	[void]$TypeRelDic.Add('L', $iTLogDir.TrimEnd([IO.Path]::DirectorySeparatorChar))}
+
 
 	return New-Object NMSSQL.MBkpRst.CDBFileReloc -Property @{PathTmpl=$Tmpl; DTypeRelStr=$TypeRelDic};
 }

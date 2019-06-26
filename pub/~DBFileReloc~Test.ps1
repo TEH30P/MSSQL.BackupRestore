@@ -1,4 +1,5 @@
-# !!!TODO: test it!
+New-Alias -Name Test-MSSQLBRDBFileRelocRule -Value '~MSSQLBR~DBFileReloc~Test' -Force;
+
 # Will apply relocation rules and returns new file path.
 function ~MSSQLBR~DBFileReloc~Test
 {	[CmdletBinding()]param

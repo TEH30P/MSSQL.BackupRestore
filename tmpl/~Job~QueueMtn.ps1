@@ -1,3 +1,4 @@
+# Perform queue loop process and cleanup.
 [Int32]$QueueActiveChkPeriod  = 1;
 [Int32]$QueueActiveCntMax     = 0;
 [timespan]$QueueActiveRtn     = '0.00:05:00';
@@ -7,7 +8,7 @@
 
 #--------------------------------#
 Import-Module JobShedule.Util -ArgumentList "$((Get-Item .).FullName)\rpt";
-Import-Module '.\MSSQL.BackupRestore\MSSQL.BackupRestore.psm1' <# -ArgumentList '13.0.0.0' #>;
+Import-Module MSSQL.BackupRestore <# -ArgumentList '13.0.0.0' #>;
 
 [datetime]$HistChkTime = [datetime]::Now.AddSeconds($QueueHistoryChkPeriod);
 

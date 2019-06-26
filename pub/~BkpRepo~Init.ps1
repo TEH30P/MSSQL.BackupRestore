@@ -1,3 +1,5 @@
+New-Alias -Name New-MSSQLBkpRepo  -Value '~MSSQLBR~BkpRepo~Init' -Force;
+
 # Initialize backup repo. Will create dirs tree.
 function ~MSSQLBR~BkpRepo~Init
 {	param

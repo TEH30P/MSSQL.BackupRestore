@@ -1,3 +1,5 @@
+New-Alias -Name Import-MSSQLDBTLogBkpConf -Value '~MSSQLBR~TLogBkpSmart~Conf~Load' -Force;
+
 # DB TLog smart backup process config parse and verify. Will generate hashtable with parameters for ~MSSQLBR~TLogBkpSmart~Do.
 function ~MSSQLBR~TLogBkpSmart~Conf~Load
 {	[CmdletBinding()]param
