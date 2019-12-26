@@ -143,7 +143,8 @@ end
 		{	if ($null -eq $AtLast)
 			{	throw [IO.FileNotFoundException]::new('Full/Diff database backup is not found.')}
 			
-			[DateTime]$BkpAt = $AtLast}
+			[DateTime]$BkpAt = $AtLast;
+		}
 		else
 		{	if ($null -eq $LsnLast)
 			{	if ($BkpDiffInfoCll.Count)
@@ -174,11 +175,13 @@ end
 					}
 				}
 				else 
-				{	[Void]$BkpTLogInfoCll.Add($BkpInfo)}
+				{	$AtLast = $BkpInfo.PSAt;
+					[Void]$BkpTLogInfoCll.Add($BkpInfo);
+				}
 			}
 
 			if (-not $fPointInTime)
-			{	foreach ($BkpInfo in m~BkpFileTLog~Get $iaRepoPath $iSrvInstSrc $iDBNameSrc -iFltLast 1 -iFltAtMax $iTimeTrg -iFltCopyOnly $true)
+			{	foreach ($BkpInfo in m~BkpFileTLog~Get $iaRepoPath $iSrvInstSrc $iDBNameSrc -iFltLast 1 -iFltAtMin $AtLast -iFltAtMax $iTimeTrg -iFltCopyOnly $true)
 				{	[Void]$BkpTLogInfoCll.Add($BkpInfo)
 					$AtLast = $BkpInfo.PSAt;
 				}

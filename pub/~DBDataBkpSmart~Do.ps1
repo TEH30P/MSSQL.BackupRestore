@@ -4,7 +4,7 @@ New-Alias -Name Backup-MSSQLDBDataSmart -Value '~MSSQLBR~DBDataBkpSmart~Do';
 function ~MSSQLBR~DBDataBkpSmart~Do
 {	[CmdletBinding()]param
 	(	[parameter(Mandatory=1, position=0)]
-			[String]$iSrvInst
+			[Object]$iSrvInst
 	,	[parameter(Mandatory=1, position=1)]
 			[String]$iDBName
 	,	[parameter(Mandatory=1, position=2)]
@@ -57,7 +57,11 @@ try
 	[NMSSQL.MBkpRst.EBkpJobType]$JobType = [NMSSQL.MBkpRst.EBkpJobType]::Data;
 	
 	Write-Verbose 'Create a queue item.';
-	[String]$Local:QIKey = m~Queue~Bkp~New $iaRepoPath $iPriority $JobType $iSrvInst $iDBName $iConfPath;
+	
+	if ($iSrvInst -is [String])
+	{	[String]$Local:QIKey = m~Queue~Bkp~New $iaRepoPath $iPriority $JobType $iSrvInst      $iDBName $iConfPath}
+	else 
+	{	[String]$Local:QIKey = m~Queue~Bkp~New $iaRepoPath $iPriority $JobType $iSrvInst.Name $iDBName $iConfPath}
 
 	Write-Verbose 'Connect to sql server.';
 	[Microsoft.SqlServer.Management.Smo.Server]$SMOSrv = $null;

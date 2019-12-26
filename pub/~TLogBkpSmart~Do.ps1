@@ -4,7 +4,7 @@ New-Alias -Name Backup-MSSQLDBTLogBkpSmart -Value '~MSSQLBR~TLogBkpSmart~Do' -Fo
 function ~MSSQLBR~TLogBkpSmart~Do
 {	[CmdletBinding()]param 
 	(	[parameter(Mandatory=1, position=0)]
-			[String]$iSrvInst
+			[Object]$iSrvInst
 	,	[parameter(Mandatory=1, position=1)]
 			[String]$iDBName
 	,	[parameter(Mandatory=1, position=2)]
@@ -81,8 +81,13 @@ try
 	[NMSSQL.MBkpRst.EBkpJobType]$JobType = [NMSSQL.MBkpRst.EBkpJobType]::TLog;
 	[datetime]$StartIt = $iStartAt;
 	
-	Write-Verbose 'Startind loop.';
+	if ($iSrvInst -is [String])
+	{	[String]$iSrvInstName = $iSrvInst}
+	else 
+	{	[String]$iSrvInstName = $iSrvInst.Name}
 
+	Write-Verbose 'Startind loop.';
+	
 	while ([datetime]::Now -lt $iStartAt + $iDuration)
 	{	[Int32]$SleepSs = ($StartIt - [datetime]::Now).TotalSeconds + 0.5;
 
@@ -92,7 +97,7 @@ try
 		if ($DoInit)
 		{	Write-Verbose 'Create a queue item.';
 
-			[String]$Local:QIKey = m~Queue~Bkp~New $iaRepoPath $iPriority $JobType $iSrvInst $iDBName $iConfPath;
+			[String]$Local:QIKey = m~Queue~Bkp~New $iaRepoPath $iPriority $JobType $iSrvInstName $iDBName $iConfPath;
 		
 			[Microsoft.SqlServer.Management.Smo.Server]$SMOSrv = $null;
 			[Microsoft.SqlServer.Management.Common.ServerConnection]$SMOCnn = $null;
