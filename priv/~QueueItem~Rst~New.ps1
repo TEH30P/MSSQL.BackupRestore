@@ -36,18 +36,8 @@ function m~Queue~Rst~New
 	;	'L-Msg'        = @()
 	};
 
-	[Collections.Generic.HashSet[Uri]]$aRepoPass = @();
-	
-	foreach ($RepoIt in $iaRepoPath)
-	{	if (-not $aRepoPass.Add($RepoIt))
-		{	continue}
-
-		if ($RepoIt.Scheme -ne [Uri]::UriSchemeFile)
-		{	throw [InvalidOperationException]::new("Invalid repo path. Only 'UriSchemeFile' scheme supported, got $($RepoIt.Scheme).")}
-
-		[String]$QueueDir = [IO.Path]::Combine($RepoIt.LocalPath, 'queue\new');
-		@{'O-MSSQLBkpQ' = $dQIContent} | ConvertTo-Json -Compress | Out-File -Encoding Utf8 -LiteralPath "$QueueDir\$QItemName";
-	}
+	foreach ($QueueRootIt in m~QueueDirPathRoot~Get $iaRepoPath)
+	{	@{'O-MSSQLBkpQ' = $dQIContent} | ConvertTo-Json -Compress | Out-File -Encoding Utf8 -LiteralPath "$QueueRootIt\new\$QItemName"}
 
 	return $QItemName;
 }

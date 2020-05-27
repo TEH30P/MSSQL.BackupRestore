@@ -18,7 +18,7 @@ function ~MSSQLBR~DBRstSmart~Do
 	,   [parameter(Mandatory=0)]
 			[Byte]$iPriority = 0
 	,   [parameter(Mandatory=0)]
-			[ValidateSet('', 'f', 'df', 'fd', 'fl', 'lf', 'dfl', 'fdl', 'ldf', 'd', 'l', 'dl', 'ld')]
+			[ValidateSet('', 'f', 'df', 'fd', 'fl', 'lf', 'dfl', 'fdl', 'ldf', 'd', 'l', 'dl', 'ld', 'c')]
 			[String]$iOperAllow = 'fd'
 	,   [parameter(Mandatory=0)]
 			[switch]$fStandby
@@ -73,25 +73,37 @@ end
 		[Collections.ArrayList]$BkpFullInfoCll = @();
 		[Collections.ArrayList]$BkpDiffInfoCll = @();
 		[Collections.ArrayList]$BkpRowsInfoCll = $null;
-		
+
+		[Boolean]$BkpCopyOnly = $iOperAllow.Equals('c');
+
 		foreach ($BkpJobType in 'DBFull', 'DBDiff')
 		{	if ($BkpJobType -eq 'DBFull')
-			{	if ($iOperAllow.Contains('f'))
+			{	if ($iOperAllow.Contains('f') -or $iOperAllow.Equals('c'))
 				{	$BkpRowsInfoCll = $BkpFullInfoCll}
 				else 
 				{	continue}
 			}
 			
 			if ($BkpJobType -eq 'DBDiff')
-			{	if ($iOperAllow.Contains('d'))
+			{	if ($iOperAllow.Contains('d') -or $iOperAllow.Equals('c'))
 				{	$BkpRowsInfoCll = $BkpDiffInfoCll}
 				else 
 				{	continue}
 			}
 
-			foreach($BkpInfo in m~BkpFileData~Get $iaRepoPath $iSrvInstSrc $iDBNameSrc -iFltLast 1 -iFltBkpJobType $BkpJobType -iFltCopyOnly $false -iFltAtMin $AtLast -iFltAtMax $iTimeTrg)
+			foreach($BkpInfo in m~BkpFileData~Get $iaRepoPath $iSrvInstSrc $iDBNameSrc -iFltLast 1 -iFltBkpJobType $BkpJobType -iFltCopyOnly $BkpCopyOnly -iFltAtMin $AtLast -iFltAtMax $iTimeTrg)
 			{	[Void]$BkpRowsInfoCll.Add($BkpInfo);
 				$AtLast = $BkpInfo.PSAt;
+			}
+		}
+
+		if ($iOperAllow.Equals('c'))
+		{	# In case when diff copy-only backup found i will find suitable non-copy-only full backup.
+			if ($BkpDiffInfoCll.Count -gt 0)
+			{	$BkpFullInfoCll.Clear();
+
+				foreach($BkpInfo in m~BkpFileData~Get $iaRepoPath $iSrvInstSrc $iDBNameSrc -iFltLast 1 -iFltBkpJobType 'DBFull' -iFltCopyOnly $false -iFltAtMax $AtLast)
+				{	[Void]$BkpFullInfoCll.Add($BkpInfo)}
 			}
 		}
 
@@ -195,7 +207,7 @@ end
 				{	if ($BkpInfo.PSAt -lt $iTimeTrg)
 					{	continue}
 					elseif (-not $PointInTime)
-					{	$PointInTime = $true;						
+					{	$PointInTime = $true;
 						$AtLast = $BkpInfo.PSAt;
 					}
 					elseif ($AtLast -ne $BkpInfo.PSAt)

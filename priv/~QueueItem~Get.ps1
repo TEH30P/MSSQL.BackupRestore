@@ -4,32 +4,22 @@ function m~QueueItem~Get
 ,	[String]$iKey
 ,	[NMSSQL.MBkpRst.EBkpQItemState]$iState
 )
-{	[Collections.Generic.HashSet[Uri]]$aRepoPass = @();
+{	
+	[String[]]$aDir `
+	=	if ($iState -eq 'Nil') 
+		{	${m~Queue~aStateFSName}} 
+		else 
+		{	${m~Queue~dStateFSName}[[string]$iState]}
+	;
 	
-	foreach ($RepoIt in $iaRepoPath)
-	{	if (-not $aRepoPass.Add($RepoIt))
-		{	continue}
-		
-		if ($RepoIt.Scheme -ne [Uri]::UriSchemeFile)
-		{	throw [InvalidOperationException]::new("Invalid repo path. Only 'UriSchemeFile' scheme supported, got $($RepoIt.Scheme).")}
-
-		[String[]]$aDir `
-		=	if ($iState -eq 'Nil') 
-			{	${m~Queue~aStateFSName}} 
-			else 
-			{	${m~Queue~dStateFSName}[[string]$iState]}
-		;
-
-		foreach ($DirIt in $aDir)
-		{	[NMSSQL.MBkpRst.EBkpQItemState]$StateCurr = $DirIt;
-			[String]$QueueDir = [IO.Path]::Combine($RepoIt.LocalPath, "queue\$DirIt");
-			
-			foreach ($QItemIt in [IO.Directory]::EnumerateFiles($QueueDir))
+	foreach ($QueueRootIt in m~QueueDirPathRoot~Get $iaRepoPath)
+	{	foreach ($DirIt in $aDir)
+		{	foreach ($QItemIt in [IO.Directory]::EnumerateFiles("$QueueRootIt\$DirIt"))
 			{	if ([IO.Path]::GetFileName($QItemIt) -eq $iKey)
-				{	return [PSCustomObject]@{PSRepo = $RepoIt; PSState = $StateCurr; PSFilePath = $QItemIt}} #<--
+				{	return [PSCustomObject]@{PSState = ([NMSSQL.MBkpRst.EBkpQItemState]$DirIt); PSFilePath = ([String]$QItemIt); PSQueueDirPath=$QueueRootIt}} #<--
 			}
 		}
 	}
 
-	throw [Management.Automation.ItemNotFoundException]::new('Bkp queue item not found.')
+	return [PSCustomObject]@{PSState = ([NMSSQL.MBkpRst.EBkpQItemState]::Nil)};
 }

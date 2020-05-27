@@ -8,7 +8,10 @@ function m~QueueItem~Upd
 #!!!TODO: add file rename in corresponding to function parameters.
 {try{
 	foreach ($FindResIt in m~QueueItem~Get $iaRepoPath $iKey $iState)
-	{	[PSCustomObject]$QICont = [IO.File]::ReadAllText($FindResIt.PSFilePath) | ConvertFrom-Json;
+	{	if ($FindResIt.PSState -eq 'Nil')
+		{	throw [Management.Automation.ItemNotFoundException]::new('Bkp queue item not found.')}
+
+		[PSCustomObject]$QICont = [IO.File]::ReadAllText($FindResIt.PSFilePath) | ConvertFrom-Json;
 			
 		foreach ($KVIt in $idCont.GetEnumerator())
 		{	$QICont.'O-MSSQLBkpQ'."$($KVIt.Key)" = $KVIt.Value}

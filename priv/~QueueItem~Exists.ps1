@@ -4,24 +4,16 @@ function m~QueueItem~Exists
 ,	[String]$iKey
 ,	[NMSSQL.MBkpRst.EBkpQItemState]$iState
 )
-{	[Collections.Generic.HashSet[Uri]]$aRepoPass = @();
+{	[String[]]$aDir `
+	=	if ($iState -eq 'Nil') 
+		{	${m~Queue~aStateFSName}} 
+		else 
+		{	${m~Queue~dStateFSName}[[string]$iState]}
+	;
 	
-	foreach ($RepoIt in $iaRepoPath)
-	{	if (-not $aRepoPass.Add($RepoIt))
-		{	continue}
-		
-		if ($RepoIt.Scheme -ne [Uri]::UriSchemeFile)
-		{	throw [InvalidOperationException]::new("Invalid repo path. Only 'UriSchemeFile' scheme supported, got $($RepoIt.Scheme).")}
-
-		[String[]]$aDir `
-		=	if ($iState -eq 'Nil') 
-			{	${m~Queue~aStateFSName}} 
-			else 
-			{	${m~Queue~dStateFSName}[[string]$iState]}
-		;
-
-		foreach ($DirIt in $aDir)
-		{	if ([IO.File]::Exists([IO.Path]::Combine($RepoIt.LocalPath, "queue\$DirIt\$iKey")))
+	foreach ($QueueRootIt in m~QueueDirPathRoot~Get $iaRepoPath)
+	{	foreach ($DirIt in $aDir)
+		{	if ([IO.File]::Exists("$QueueRootIt\$DirIt\$iKey"))
 			{	return $true} #<--
 		}
 	}

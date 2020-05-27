@@ -19,10 +19,9 @@
 #--------------------------------#
 # Get queue dir path.
 function m~QueueDirPathRoot~Get
-(	[Uri[]]$iaRepoPath
-,	[NMSSQL.MBkpRst.EBkpQItemState]$iState = 'Nil'
-)
+(	[Uri[]]$iaRepoPath)
 {	[Collections.Generic.HashSet[Uri]]$aRepoPass = @();
+	[Collections.Generic.HashSet[String]]$aQueuePass = @();
 
 	foreach ($RepoIt in $iaRepoPath)
 	{	if (-not $aRepoPass.Add($RepoIt))
@@ -30,13 +29,16 @@ function m~QueueDirPathRoot~Get
 		
 		if ($RepoIt.Scheme -ne [Uri]::UriSchemeFile)
 		{	throw [InvalidOperationException]::new("Invalid repo path. Only 'UriSchemeFile' scheme supported, got $($RepoIt.Scheme).")}
+		
+		[string]$DirRoot = [IO.Path]::Combine($RepoIt.LocalPath, 'queue');
 
-		if ($iState -eq 'Nil') 
-		{	foreach($QueDirIt in ${m~Queue~aStateFSName})
-			{	[IO.Path]::Combine($RepoIt.LocalPath, "queue\$QueDirIt")} #<--
-		}
-		else 
-		{	[IO.Path]::Combine($RepoIt.LocalPath, "queue\$(${m~Queue~dStateFSName}[[string]$iState])")} #<--
+		if ([IO.File]::Exists($DirRoot))
+		{	$DirRoot = [IO.File]::ReadAllText($DirRoot)}
+
+		if (-not $aQueuePass.Add($DirRoot))
+		{	continue}
+
+		$DirRoot; #<--
 	}
 }
 
@@ -47,6 +49,14 @@ function m~Queue~Get
 ,	[NMSSQL.MBkpRst.EBkpQItemState]$iState
 )
 {	[Collections.Generic.HashSet[Uri]]$aRepoPass = @();
+	[Collections.Generic.HashSet[String]]$aQueuePass = @();
+
+	[String[]]$aDir `
+	=	if ($iState -eq 'Nil') 
+		{	${m~Queue~aStateFSName}} 
+		else 
+		{	${m~Queue~dStateFSName}[[string]$iState]}
+	;
 
 	foreach ($RepoIt in $iaRepoPath)
 	{	if (-not $aRepoPass.Add($RepoIt))
@@ -55,19 +65,19 @@ function m~Queue~Get
 		if ($RepoIt.Scheme -ne [Uri]::UriSchemeFile)
 		{	throw [InvalidOperationException]::new("Invalid repo path. Only 'UriSchemeFile' scheme supported, got $($RepoIt.Scheme).")}
 
-		[String[]]$aDir `
-		=	if ($iState -eq 'Nil') 
-			{	${m~Queue~aStateFSName}} 
-			else 
-			{	${m~Queue~dStateFSName}[[string]$iState]}
-		;
+		[string]$DirRoot = [IO.Path]::Combine($RepoIt.LocalPath, 'queue');
+
+		if ([IO.File]::Exists($DirRoot))
+		{	$DirRoot = [IO.File]::ReadAllText($DirRoot)}
+
+		if (-not $aQueuePass.Add($DirRoot))
+		{	continue}
 
 		foreach ($DirIt in $aDir)
 		{	[NMSSQL.MBkpRst.EBkpQItemState]$StateCurr = $DirIt;
-			[String]$QueueDir = [IO.Path]::Combine($RepoIt.LocalPath, "queue\$DirIt");
 			
-			foreach ($QItemIt in [IO.Directory]::EnumerateFiles($QueueDir))
-			{	 [PSCustomObject]@{PSRepo = $RepoIt; PSState = $StateCurr; PSKey = [IO.Path]::GetFileName($QItemIt); PSFilePath = $QItemIt}} #<--
+			foreach ($QItemIt in [IO.Directory]::EnumerateFiles("$DirRoot\$DirIt"))
+			{	 [PSCustomObject]@{PSRepo = $RepoIt; PSState = $StateCurr; PSKey = [IO.Path]::GetFileName($QItemIt); PSQueueDirPath=$DirRoot; PSFilePath = $QItemIt}} #<--
 		}
 	}
 }
